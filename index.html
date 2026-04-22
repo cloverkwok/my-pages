@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>午饭晚饭决策器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* 主卡片 */
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        /* 标题区域 */
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* 选择区域 */
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .option-btn {
+            padding: 10px 20px;
+            border-radius: 50px;
+            background: #f5f5f5;
+            color: #666;
+            font-size: 14px;
+            border: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .option-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        /* 决策按钮 */
+        .decision-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 16px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+        }
+
+        .decision-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        /* 结果卡片 */
+        .result-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 24px;
+            padding: 24px;
+            margin-top: 20px;
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .result-card.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .food-name {
+            font-size: 26px;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px dashed #ddd;
+        }
+
+        .info-row {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-label {
+            width: 70px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            flex: 1;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .tip {
+            background: #fff3e0;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #e67e22;
+            text-align: center;
+        }
+
+        /* 按钮组 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-refresh {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-back {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.97);
+        }
+
+        /* 历史记录 */
+        .history-section {
+            margin-top: 20px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .history-title {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .clear-history {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .history-list {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .history-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+        }
+
+        /* 加载动画 */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        /* 底部 */
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-card">
+            <div class="header">
+                <h1>
+                    <span>🍽️</span>
+                    <span>午饭晚饭决策器</span>
+                </h1>
+                <p>选择你的偏好，随机推荐美食</p>
+            </div>
+
+            <!-- 口味选择 -->
+            <div class="section">
+                <div class="section-title">
+                    <span>👅</span>
+                    <span>口味偏好</span>
+                </div>
+                <div class="options" id="tasteOptions"></div>
+            </div>
+
+            <!-- 营养选择 -->
+            <div class="section">
+                <div class="section-title">
+                    <span>💪</span>
+                    <span>营养偏好</span>
+                </div>
+                <div class="options" id="nutritionOptions"></div>
+            </div>
+
+            <!-- 饱腹度选择 -->
+            <div class="section">
+                <div class="section-title">
+                    <span>🍚</span>
+                    <span>饱腹程度</span>
+                </div>
+                <div class="options" id="fullnessOptions"></div>
+            </div>
+
+            <!-- 决策按钮 -->
+            <button class="decision-btn" id="decisionBtn">
+                🎲 随机推荐
+            </button>
+
+            <!-- 结果显示区域 -->
+            <div id="resultArea">
+                <div class="result-card" id="resultCard">
+                    <div class="food-name" id="foodName"></div>
+                    <div class="info-row">
+                        <div class="info-label">口味：</div>
+                        <div class="info-value" id="foodTaste"></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">营养：</div>
+                        <div class="info-value" id="foodNutrition"></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">饱腹度：</div>
+                        <div class="info-value" id="foodFullness"></div>
+                    </div>
+                    <div class="tip" id="foodTip"></div>
+                    <div class="action-buttons">
+                        <button class="btn-secondary btn-refresh" id="refreshBtn">🔄 换一个</button>
+                        <button class="btn-secondary btn-back" id="backBtn">✏️ 重新筛选</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录 -->
+        <div class="history-section">
+            <div class="history-header">
+                <div class="history-title">📜 最近推荐</div>
+                <button class="clear-history" id="clearHistoryBtn">清空记录</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-state">暂无记录，点击推荐试试</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            随机推荐，仅供参考 | 开心吃饭最重要
+        </div>
+    </div>
+
+    <script>
+        // 菜单数据（从你的CSV转换而来）
+        const menuData = [
+            { name: "王一一脆皮烧鸡", taste: "咸", nutrition: "高蛋白低碳水", fullness: 9 },
+            { name: "鑫梦园自选", taste: "咸辣", nutrition: "均衡", fullness: 7 },
+            { name: "味正香一荤一素", taste: "咸", nutrition: "均衡", fullness: 7 },
+            { name: "味正香两荤一素", taste: "咸", nutrition: "均衡", fullness: 9 },
+            { name: "小杨哥瘦肉汤饭", taste: "清淡咸", nutrition: "均衡", fullness: 7 },
+            { name: "小杨哥猪脚饭", taste: "咸", nutrition: "均衡高碳水", fullness: 9 },
+            { name: "茶叶蛋*2", taste: "清淡", nutrition: "高蛋白低碳水", fullness: 5 },
+            { name: "阿姨猪脚饭", taste: "咸", nutrition: "均衡高脂肪", fullness: 9 },
+            { name: "缥雪肉沫饭", taste: "咸", nutrition: "均衡", fullness: 9 },
+            { name: "肠粉", taste: "清淡", nutrition: "高碳水", fullness: 7 },
+            { name: "双层吉士堡", taste: "清淡咸", nutrition: "高蛋白", fullness: 7 },
+            { name: "擂椒拌饭", taste: "咸辣", nutrition: "均衡", fullness: 9 },
+            { name: "双层鳕鱼堡", taste: "清淡咸", nutrition: "高蛋白高脂肪", fullness: 9 },
+            { name: "粤港猪脚饭", taste: "咸", nutrition: "高脂肪高碳水", fullness: 9 },
+            { name: "德保自选", taste: "清淡咸", nutrition: "均衡低碳水", fullness: 9 },
+            { name: "711饭团", taste: "清淡", nutrition: "高碳水", fullness: 5 },
+            { name: "板烧鸡腿堡", taste: "咸甜", nutrition: "均衡", fullness: 7 },
+            { name: "尝绿轻食盒", taste: "清淡", nutrition: "均衡", fullness: 9 },
+            { name: "yekoo卤肉饭", taste: "咸", nutrition: "均衡高蛋白", fullness: 9 },
+            { name: "袁记云饺", taste: "清淡", nutrition: "高碳水", fullness: 7 },
+            { name: "yo健康料理法棍", taste: "清淡", nutrition: "均衡", fullness: 9 },
+            { name: "yo健康料理杂粮饭", taste: "咸清淡", nutrition: "均衡", fullness: 9 },
+            { name: "弄潮潮汕粿条", taste: "清淡", nutrition: "均衡高碳水", fullness: 7 },
+            { name: "文创椰浆猪扒饭", taste: "甜咸", nutrition: "均衡高碳水高脂肪", fullness: 9 },
+            { name: "德保牛腩云吞", taste: "清淡", nutrition: "均衡", fullness: 7 },
+            { name: "沙县拌云吞", taste: "清淡咸", nutrition: "高碳水", fullness: 5 },
+            { name: "煮鸡蛋", taste: "清淡", nutrition: "高蛋白低碳水", fullness: 7 },
+            { name: "麦香鱼", taste: "清淡", nutrition: "高碳水", fullness: 5 },
+            { name: "yekoo鸡胸饭", taste: "清淡", nutrition: "均衡高碳水", fullness: 9 },
+            { name: "yekoo猪扒饭", taste: "清淡", nutrition: "均衡", fullness: 9 },
+            { name: "必胜客汉堡", taste: "清淡咸", nutrition: "高碳水高脂肪", fullness: 9 },
+            { name: "果悦巴斯克", taste: "甜", nutrition: "高脂肪", fullness: 7 },
+            { name: "星巴克蛋糕", taste: "甜", nutrition: "高脂肪", fullness: 7 },
+            { name: "渝都冒菜", taste: "咸辣", nutrition: "均衡", fullness: 9 },
+            { name: "简便当芝士肉酱饭", taste: "咸", nutrition: "高脂肪高碳水", fullness: 9 },
+            { name: "雾鲜鸡蛋仔", taste: "甜", nutrition: "高碳水", fullness: 5 }
+        ];
+
+        // 选项配置
+        const tasteOptions = ["不限", "清淡", "咸", "辣", "甜"];
+        const nutritionOptions = ["不限", "均衡", "高蛋白", "高碳水", "高脂肪"];
+        const fullnessOptions = ["不限", "5", "7", "9"];
+
+        // 当前选中的条件
+        let selectedTaste = "不限";
+        let selectedNutrition = "不限";
+        let selectedFullness = "不限";
+
+        // 当前推荐的菜品
+        let currentRecommendation = null;
+
+        // 历史记录
+        let history = [];
+
+        // 加载历史记录
+        function loadHistory() {
+            const saved = localStorage.getItem('foodDecisionHistory');
+            if (saved) {
+                history = JSON.parse(saved);
+                renderHistory();
+            }
+        }
+
+        // 保存历史记录
+        function saveHistory() {
+            localStorage.setItem('foodDecisionHistory', JSON.stringify(history.slice(0, 20))); // 最多保存20条
+            renderHistory();
+        }
+
+        // 添加历史记录
+        function addToHistory(food) {
+            history.unshift({
+                name: food.name,
+                time: new Date().toLocaleTimeString(),
+                date: new Date().toLocaleDateString()
+            });
+            saveHistory();
+        }
+
+        // 清空历史记录
+        function clearHistory() {
+            history = [];
+            saveHistory();
+        }
+
+        // 渲染历史记录
+        function renderHistory() {
+            const container = document.getElementById('historyList');
+            if (history.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无记录，点击推荐试试</div>';
+                return;
+            }
+            
+            container.innerHTML = history.slice(0, 10).map(item => `
+                <div class="history-item">
+                    <span class="history-name">${item.name}</span>
+                    <span class="history-time">${item.date} ${item.time}</span>
+                </div>
+            `).join('');
+        }
+
+        // 筛选函数（支持模糊匹配）
+        function filterData() {
+            let filtered = menuData;
+            
+            if (selectedTaste !== "不限") {
+                filtered = filtered.filter(item => item.taste.includes(selectedTaste));
+            }
+            
+            if (selectedNutrition !== "不限") {
+                filtered = filtered.filter(item => item.nutrition.includes(selectedNutrition));
+            }
+            
+            if (selectedFullness !== "不限") {
+                filtered = filtered.filter(item => item.fullness == selectedFullness);
+            }
+            
+            return filtered;
+        }
+
+        // 获取饱腹度提示
+        function getFullnessTip(fullness) {
+            if (fullness == 5) return "🍃 五分饱 - 小份，适合不太饿的时候";
+            if (fullness == 7) return "👍 七分饱 - 正常份量，刚刚好";
+            if (fullness == 9) return "🍖 九分饱 - 大份，适合很饿的时候";
+            return "";
+        }
+
+        // 显示推荐结果
+        function showRecommendation(food) {
+            currentRecommendation = food;
+            
+            document.getElementById('foodName').textContent = food.name;
+            document.getElementById('foodTaste').textContent = food.taste;
+            document.getElementById('foodNutrition').textContent = food.nutrition;
+            document.getElementById('foodFullness').textContent = `${food.fullness}分饱`;
+            document.getElementById('foodTip').textContent = getFullnessTip(food.fullness);
+            
+            const resultCard = document.getElementById('resultCard');
+            resultCard.classList.add('show');
+            
+            // 滚动到结果区域
+            setTimeout(() => {
+                resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        // 随机推荐
+        function randomRecommend() {
+            const filtered = filterData();
+            
+            if (filtered.length === 0) {
+                alert('❌ 没有符合条件的菜品，试试放宽条件吧～');
+                return null;
+            }
+            
+            const randomIndex = Math.floor(Math.random() * filtered.length);
+            const recommendation = filtered[randomIndex];
+            
+            showRecommendation(recommendation);
+            addToHistory(recommendation);
+            
+            return recommendation;
+        }
+
+        // 刷新推荐（换一个）
+        function refreshRecommend() {
+            const filtered = filterData();
+            
+            if (filtered.length === 0) {
+                alert('❌ 没有其他符合条件的菜品了');
+                return;
+            }
+            
+            // 如果当前有推荐，且筛选后不止一个，换一个不同的
+            let newRecommendation;
+            if (currentRecommendation && filtered.length > 1) {
+                let different = filtered.filter(item => item.name !== currentRecommendation.name);
+                if (different.length > 0) {
+                    newRecommendation = different[Math.floor(Math.random() * different.length)];
+                } else {
+                    newRecommendation = filtered[Math.floor(Math.random() * filtered.length)];
+                }
+            } else {
+                newRecommendation = filtered[Math.floor(Math.random() * filtered.length)];
+            }
+            
+            showRecommendation(newRecommendation);
+            addToHistory(newRecommendation);
+        }
+
+        // 重置筛选
+        function resetAndBack() {
+            // 保持筛选条件不变，只清除当前结果
+            const resultCard = document.getElementById('resultCard');
+            resultCard.classList.remove('show');
+            currentRecommendation = null;
+            
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 渲染选项按钮
+        function renderOptions() {
+            // 口味选项
+            const tasteContainer = document.getElementById('tasteOptions');
+            tasteContainer.innerHTML = tasteOptions.map(opt => `
+                <button class="option-btn ${selectedTaste === opt ? 'active' : ''}" data-type="taste" data-value="${opt}">
+                    ${opt}
+                </button>
+            `).join('');
+            
+            // 营养选项
+            const nutritionContainer = document.getElementById('nutritionOptions');
+            nutritionContainer.innerHTML = nutritionOptions.map(opt => `
+                <button class="option-btn ${selectedNutrition === opt ? 'active' : ''}" data-type="nutrition" data-value="${opt}">
+                    ${opt}
+                </button>
+            `).join('');
+            
+            // 饱腹度选项
+            const fullnessContainer = document.getElementById('fullnessOptions');
+            fullnessContainer.innerHTML = fullnessOptions.map(opt => {
+                let label = opt;
+                if (opt === "5") label = "5分饱 🍃";
+                else if (opt === "7") label = "7分饱 👍";
+                else if (opt === "9") label = "9分饱 🍖";
+                else label = "不限";
+                return `
+                    <button class="option-btn ${selectedFullness === opt ? 'active' : ''}" data-type="fullness" data-value="${opt}">
+                        ${label}
+                    </button>
+                `;
+            }).join('');
+            
+            // 绑定点击事件
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const type = btn.dataset.type;
+                    const value = btn.dataset.value;
+                    
+                    if (type === 'taste') selectedTaste = value;
+                    else if (type === 'nutrition') selectedNutrition = value;
+                    else if (type === 'fullness') selectedFullness = value;
+                    
+                    renderOptions();
+                    
+                    // 如果已有结果，清空结果（因为条件变了）
+                    const resultCard = document.getElementById('resultCard');
+                    resultCard.classList.remove('show');
+                    currentRecommendation = null;
+                });
+            });
+        }
+
+        // 初始化
+        function init() {
+            renderOptions();
+            loadHistory();
+            
+            // 绑定按钮事件
+            document.getElementById('decisionBtn').addEventListener('click', () => randomRecommend());
+            document.getElementById('refreshBtn').addEventListener('click', () => refreshRecommend());
+            document.getElementById('backBtn').addEventListener('click', () => resetAndBack());
+            document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+                if (confirm('确定清空所有历史记录吗？')) {
+                    clearHistory();
+                }
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
