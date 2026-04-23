@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>这顿吃什么?</title>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+/* ✅ 全局字体：华文中宋 + 兼容回退 */
+body {
+    font-family: "STZhongsong", "华文中宋", "Songti SC", serif;
+    background-image: linear-gradient(to right, #eea2a2, #57c6e1, #b49fda);
+    padding:20px;
+}
+
+.container { max-width:500px; margin:auto; }
+
+.main-card {
+    background:rgba(255,255,255,0.95);
+    border-radius:30px;
+    padding:20px;
+}
+
+.header { text-align:center; margin-bottom:20px; }
+
+.section { margin-bottom:20px; }
+
+.options { display:flex; flex-wrap:wrap; gap:10px; }
+
+.option-btn {
+    padding:10px 16px;
+    border-radius:50px;
+    border:none;
+    background:#f5f5f5;
+}
+
+.option-btn.active {
+    background:linear-gradient(to right,#bebed7,#8c8cda);
+    color:white;
+}
+
+.decision-btn {
+    width:100%;
+    padding:14px;
+    border-radius:50px;
+    border:none;
+    background:linear-gradient(to right,#a7a6cb,#8989ba);
+    color:white;
+    margin-top:10px;
+}
+
+.result-card {
+    display:none;
+    margin-top:20px;
+    background:#f5f5f5;
+    border-radius:20px;
+    padding:20px;
+}
+
+.result-card.show { display:block; }
+
+.food-name { text-align:center; font-size:22px; margin-bottom:10px; }
+
+.info-row { display:flex; margin-bottom:6px; }
+
+.action-buttons { display:flex; gap:10px; margin-top:10px; }
+
+.btn-secondary {
+    flex:1;
+    padding:10px;
+    border:none;
+    border-radius:50px;
+    color:white;
+}
+
+.btn-refresh { background:#e185aa; }
+.btn-back { background:#95a5a6; }
+
+/* ✅ 历史记录完整保留 */
+.history-section { margin-top:20px; }
+
+.history-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.history-title {
+    color:white;
+    font-size:14px;
+}
+
+.clear-history {
+    background:rgba(255,255,255,0.3);
+    border:none;
+    padding:5px 10px;
+    border-radius:20px;
+    color:white;
+}
+
+.history-list {
+    background:rgba(255,255,255,0.2);
+    border-radius:15px;
+    padding:10px;
+}
+
+.history-item {
+    background:white;
+    margin-bottom:6px;
+    padding:8px;
+    border-radius:10px;
+    font-size:12px;
+}
+
+.empty-state {
+    text-align:center;
+    color:white;
+    font-size:12px;
+}
+
+/* ✅ footer恢复 */
+.footer {
+    text-align:center;
+    margin-top:20px;
+    color:white;
+    font-size:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="main-card">
+
+<div class="header">
+<h1>🍽️ 风一树吃什么？</h1>
+</div>
+
+<div class="section">
+<div>1. 口味</div><br>
+<div class="options" id="tasteOptions"></div>
+</div>
+
+<div class="section">
+<div>2. 用餐方式</div><br>
+<div class="options" id="methodOptions"></div>
+</div>
+
+<button class="decision-btn" id="decisionBtn">🎲 随机推荐</button>
+
+<div class="result-card" id="resultCard">
+<div class="food-name" id="foodName"></div>
+
+<div class="info-row">
+<div>口味：</div>
+<div id="foodTaste"></div>
+</div>
+
+<div class="info-row">
+<div>方式：</div>
+<div id="foodMethod"></div>
+</div>
+
+<div class="action-buttons">
+<button class="btn-secondary btn-refresh" id="refreshBtn">换一个</button>
+<button class="btn-secondary btn-back" id="backBtn">重新选</button>
+</div>
+
+</div>
+</div>
+
+<!-- ✅ 历史记录 -->
+<div class="history-section">
+    <div class="history-header">
+        <div class="history-title">📜 最近推荐</div>
+        <button class="clear-history" id="clearHistoryBtn">清空记录</button>
+    </div>
+    <div class="history-list" id="historyList">
+        <div class="empty-state">暂无记录，点击推荐试试</div>
+    </div>
+</div>
+
+<!-- ✅ footer -->
+<div class="footer">
+    随机推荐 | 仅供参考，爱吃不吃
+</div>
+
+</div>
+
+<script>
+
+const menuData = [
+{ name:"牛肉丸汤饭",taste:"清淡",method:"堂食"},
+{ name:"双丸汤饭",taste:"清淡",method:"堂食"},
+{ name:"瘦肉汤饭",taste:"清淡",method:"堂食"},
+{ name:"腌米粉",taste:"清淡",method:"堂食"},
+{ name:"台式卤肉饭",taste:"清淡",method:"堂食"},
+{ name:"袁记云饺",taste:"清淡",method:"外卖"},
+{ name:"手撕鸡饭",taste:"清淡",method:"堂食"},
+{ name:"蜜汁鸡翅",taste:"清淡",method:"堂食"},
+{ name:"烧鸭饭",taste:"清淡",method:"堂食"},
+{ name:"叉烧饭",taste:"清淡",method:"堂食"},
+{ name:"豉油鸡",taste:"清淡",method:"堂食"},
+{ name:"白切鸡腿饭",taste:"清淡",method:"堂食"},
+{ name:"板烧鸡腿堡",taste:"清淡",method:"堂食或外卖"},
+{ name:"瘦肉肠粉",taste:"清淡",method:"堂食"},
+{ name:"双层鳕鱼堡",taste:"清淡",method:"外卖"},
+{ name:"麦辣鸡腿堡",taste:"辣",method:"堂食"},
+{ name:"不素之霸双层牛堡",taste:"清淡",method:"外卖"},
+{ name:"湘小悦",taste:"辣",method:"外卖"},
+{ name:"同湘会馆香豆豉虎皮辣椒炒肉",taste:"油",method:"外卖"},
+{ name:"同湘会馆香辣鱼",taste:"油辣",method:"外卖"},
+{ name:"同湘会馆胡萝卜炒肉",taste:"油",method:"外卖"},
+{ name:"paperstone吐司",taste:"甜食",method:"外卖"},
+{ name:"paperstone巴斯克套餐",taste:"甜食",method:"外卖"},
+{ name:"海底捞拌饭",taste:"清淡",method:"外卖"},
+{ name:"真功夫土豆牛腩",taste:"清淡",method:"外卖"},
+{ name:"沅江水炒牛肉",taste:"油",method:"外卖"},
+{ name:"沅江水小炒肉",taste:"油",method:"外卖"},
+{ name:"沅江水小炒鸡",taste:"油",method:"外卖"},
+{ name:"沅江水红烧鱼",taste:"油辣",method:"外卖"},
+{ name:"锅包肉",taste:"清淡",method:"外卖"},
+{ name:"711关东煮",taste:"清淡",method:"堂食或外卖"},
+{ name:"鸡排咖喱饭",taste:"清淡",method:"外卖"},
+{ name:"猪排咖喱饭",taste:"清淡",method:"外卖"},
+{ name:"牛腩面",taste:"清淡",method:"堂食"},
+{ name:"麻辣香锅",taste:"油",method:"堂食"},
+{ name:"羊杂面",taste:"清淡",method:"外卖"}
+];
+
+const tasteOptions=["不限","清淡","油","辣","甜食"];
+const methodOptions=["不限","堂食","外卖"];
+
+let selectedTaste="不限";
+let selectedMethod="不限";
+let history=[];
+
+function renderOptions(){
+document.getElementById("tasteOptions").innerHTML=
+tasteOptions.map(o=>`<button class="option-btn ${selectedTaste===o?'active':''}" data-type="taste" data-value="${o}">${o}</button>`).join('');
+
+document.getElementById("methodOptions").innerHTML=
+methodOptions.map(o=>`<button class="option-btn ${selectedMethod===o?'active':''}" data-type="method" data-value="${o}">${o}</button>`).join('');
+
+document.querySelectorAll('.option-btn').forEach(btn=>{
+btn.onclick=()=>{
+if(btn.dataset.type==="taste") selectedTaste=btn.dataset.value;
+if(btn.dataset.type==="method") selectedMethod=btn.dataset.value;
+renderOptions();
+document.getElementById("resultCard").classList.remove("show");
+};
+});
+}
+
+function filterData(){
+let data=menuData;
+if(selectedTaste!=="不限") data=data.filter(i=>i.taste.includes(selectedTaste));
+if(selectedMethod!=="不限") data=data.filter(i=>i.method.includes(selectedMethod));
+return data;
+}
+
+function recommend(){
+const list=filterData();
+if(!list.length){alert("没有符合的呀，放宽条件试试吧！");return;}
+const food=list[Math.floor(Math.random()*list.length)];
+
+document.getElementById("foodName").textContent=food.name;
+document.getElementById("foodTaste").textContent=food.taste;
+document.getElementById("foodMethod").textContent=food.method;
+document.getElementById("resultCard").classList.add("show");
+
+history.unshift(food.name);
+renderHistory();
+}
+
+function renderHistory(){
+const box=document.getElementById("historyList");
+if(!history.length){
+box.innerHTML='<div class="empty-state">暂无记录，点击推荐试试</div>';
+return;
+}
+box.innerHTML=history.slice(0,10).map(i=>`<div class="history-item">${i}</div>`).join('');
+}
+
+document.getElementById("decisionBtn").onclick=recommend;
+document.getElementById("refreshBtn").onclick=recommend;
+document.getElementById("backBtn").onclick=()=>document.getElementById("resultCard").classList.remove("show");
+document.getElementById("clearHistoryBtn").onclick=()=>{history=[];renderHistory();};
+
+renderOptions();
+renderHistory();
+
+</script>
+
+</body>
+</html>
